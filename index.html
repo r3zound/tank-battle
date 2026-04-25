@@ -245,7 +245,7 @@ class Bullet {
   }
 }
 
-let player, enemies, bullets, score, lives, totalEnemies, gameState;
+let player, enemies, bullets, score, lives, totalEnemies, destroyedCount, gameState;
 let keys = {};
 
 function init() {
@@ -256,6 +256,7 @@ function init() {
   score = 0;
   lives = 3;
   totalEnemies = 5;
+  destroyedCount = 0;
   spawnEnemies();
   gameState = 'playing';
   updateHUD();
@@ -375,19 +376,20 @@ function gameLoop() {
     if (!b.alive) return;
     enemies.forEach(e => {
       if (!e.alive || !b.fromPlayer) return;
-      if (b.collides(e)) { e.hit(); b.alive = false; score += 100; }
+      if (b.collides(e)) { e.hit(); b.alive = false; score += 100; destroyedCount++; }
     });
-    if (!player.alive && !b.fromPlayer) {
-      if (b.collides(player)) { b.alive = false; }
+    // 敌人子弹打中玩家
+    if (player.alive && !b.fromPlayer) {
+      if (b.collides(player)) { player.hit(); b.alive = false; }
     }
   });
 
   bullets = bullets.filter(b => b.alive);
 
-  // Respawn enemies
+  // 敌人重生（最多同时3个在场，最多总共击毁10个）
   let aliveEnemies = enemies.filter(e => e.alive).length;
-  if (aliveEnemies < 3 && enemies.length < totalEnemies + 3) {
-    if (Math.random() < 0.008) spawnEnemies();
+  if (aliveEnemies < 3 && destroyedCount < totalEnemies) {
+    if (Math.random() < 0.01) spawnEnemies();
   }
 
   // Player death
@@ -401,9 +403,8 @@ function gameLoop() {
     }
   }
 
-  // Win check
-  let totalAlive = enemies.filter(e => e.alive).length;
-  if (score >= totalEnemies * 100) {
+  // Win check: 击毁 totalEnemies 个敌人即胜利
+  if (destroyedCount >= totalEnemies) {
     gameState = 'win';
   }
 
