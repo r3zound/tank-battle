@@ -7,7 +7,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0a0a0a;
+    background: #1a1a0a;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -60,7 +60,7 @@ const T = 32;
 const COLS = 13;
 const ROWS = 13;
 
-// 0=空, 1=砖, 2=钢, 3=河流, 4=草地(装饰)
+// 0=空, 1=砖, 2=钢, 3=河流
 const MAP = [
   [2,2,2,2,2,2,2,2,2,2,2,2,2],
   [2,0,0,0,1,1,0,0,1,0,0,0,2],
@@ -92,7 +92,7 @@ class Tank {
   constructor(x, y, dir, color, isPlayer) {
     this.x = x;
     this.y = y;
-    this.dir = dir; // 0=up,1=right,2=down,3=left
+    this.dir = dir;
     this.color = color;
     this.isPlayer = isPlayer;
     this.speed = isPlayer ? 2 : 1;
@@ -180,22 +180,41 @@ class Tank {
     const angles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
     ctx.rotate(angles[this.dir]);
 
-    // 履带
-    ctx.fillStyle = this.isPlayer ? '#2d5a1b' : '#5a1b1b';
-    ctx.fillRect(-14, -14, 8, 28);
-    ctx.fillRect(6, -14, 8, 28);
-
-    // 车身
-    ctx.fillStyle = this.color;
-    ctx.fillRect(-11, -11, 22, 22);
-
-    // 炮塔
-    ctx.fillStyle = this.isPlayer ? '#4a8c2a' : '#8c2a2a';
-    ctx.fillRect(-7, -7, 14, 14);
-
-    // 炮管
-    ctx.fillStyle = this.isPlayer ? '#1a4010' : '#401010';
-    ctx.fillRect(-2, -16, 4, 10);
+    if (this.isPlayer) {
+      // 履带 - 绿色
+      ctx.fillStyle = '#1a5c1a';
+      ctx.fillRect(-14, -14, 8, 28);
+      ctx.fillRect(6, -14, 8, 28);
+      // 车身 - 亮绿
+      ctx.fillStyle = '#2ecc40';
+      ctx.fillRect(-11, -11, 22, 22);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-11, -11, 22, 22);
+      // 炮塔 - 亮绿
+      ctx.fillStyle = '#27ae60';
+      ctx.fillRect(-7, -7, 14, 14);
+      // 炮管
+      ctx.fillStyle = '#1a5c1a';
+      ctx.fillRect(-2, -16, 4, 10);
+    } else {
+      // 履带 - 红色
+      ctx.fillStyle = '#7a1515';
+      ctx.fillRect(-14, -14, 8, 28);
+      ctx.fillRect(6, -14, 8, 28);
+      // 车身 - 亮红
+      ctx.fillStyle = '#e74c3c';
+      ctx.fillRect(-11, -11, 22, 22);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-11, -11, 22, 22);
+      // 炮塔 - 亮红
+      ctx.fillStyle = '#c0392b';
+      ctx.fillRect(-7, -7, 14, 14);
+      // 炮管
+      ctx.fillStyle = '#7a1515';
+      ctx.fillRect(-2, -16, 4, 10);
+    }
 
     ctx.restore();
   }
@@ -250,7 +269,7 @@ let keys = {};
 
 function init() {
   buildWalls();
-  player = new Tank(T + 2, T * 11 + 2, 0, '#4a8c2a', true);
+  player = new Tank(T + 2, T * 11 + 2, 0, '#2ecc40', true);
   enemies = [];
   bullets = [];
   score = 0;
@@ -275,7 +294,7 @@ function spawnEnemies() {
     let ex = spawns[i][0], ey = spawns[i][1];
     let blocked = enemies.some(e => e.alive && Math.abs(e.x - ex) < T && Math.abs(e.y - ey) < T);
     if (!blocked) {
-      enemies.push(new Tank(ex, ey, 2, '#8c2a2a', false));
+      enemies.push(new Tank(ex, ey, 2, '#e74c3c', false));
       count++;
     }
   }
@@ -293,9 +312,10 @@ function drawMap() {
       const x = c * T, y = r * T;
       const v = walls[r][c];
       if (v === 1) {
-        ctx.fillStyle = '#b5651d';
+        // 砖墙 - 橙色
+        ctx.fillStyle = '#cc7722';
         ctx.fillRect(x, y, T, T);
-        ctx.strokeStyle = '#8b4513';
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
         for (let i = 0; i < 3; i++) {
           for (let j = 0; j < 3; j++) {
@@ -303,22 +323,28 @@ function drawMap() {
           }
         }
       } else if (v === 2) {
-        ctx.fillStyle = '#888';
+        // 钢板墙 - 深绿+亮绿边框
+        ctx.fillStyle = '#3d5a3d';
         ctx.fillRect(x, y, T, T);
-        ctx.strokeStyle = '#aaa';
+        ctx.strokeStyle = '#4caf50';
         ctx.lineWidth = 2;
         ctx.strokeRect(x + 4, y + 4, T - 8, T - 8);
+        ctx.strokeStyle = '#2e7d32';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 8, y + 8, T - 16, T - 16);
       } else if (v === 3) {
-        ctx.fillStyle = '#1a4a8c';
+        // 河流 - 蓝色
+        ctx.fillStyle = '#0a2a5a';
         ctx.fillRect(x, y, T, T);
-        ctx.fillStyle = '#1a5aaa';
+        ctx.fillStyle = '#3399ff';
         ctx.fillRect(x + 4, y + 4, 10, 6);
         ctx.fillRect(x + 18, y + 14, 10, 6);
         ctx.fillRect(x + 4, y + 22, 10, 6);
       } else {
-        ctx.fillStyle = '#1a1a0a';
+        // 草地 - 深绿
+        ctx.fillStyle = '#2d4a1a';
         ctx.fillRect(x, y, T, T);
-        ctx.strokeStyle = '#222';
+        ctx.strokeStyle = '#3a5c23';
         ctx.lineWidth = 0.5;
         ctx.strokeRect(x, y, T, T);
       }
@@ -327,15 +353,18 @@ function drawMap() {
 }
 
 function drawOverlay(text, sub) {
-  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillStyle = 'rgba(0,0,0,0.88)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#4caf50';
-  ctx.font = 'bold 32px Courier New';
+  ctx.font = 'bold 36px Courier New';
   ctx.textAlign = 'center';
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 10);
+  ctx.shadowColor = '#4caf50';
+  ctx.shadowBlur = 16;
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 20);
+  ctx.shadowBlur = 0;
   if (sub) {
-    ctx.fillStyle = '#888';
-    ctx.font = '16px Courier New';
+    ctx.fillStyle = '#cccccc';
+    ctx.font = '18px Courier New';
     ctx.fillText(sub, canvas.width / 2, canvas.height / 2 + 20);
   }
   ctx.textAlign = 'left';
@@ -378,7 +407,6 @@ function gameLoop() {
       if (!e.alive || !b.fromPlayer) return;
       if (b.collides(e)) { e.hit(); b.alive = false; score += 100; destroyedCount++; }
     });
-    // 敌人子弹打中玩家
     if (player.alive && !b.fromPlayer) {
       if (b.collides(player)) { player.hit(); b.alive = false; }
     }
@@ -386,7 +414,7 @@ function gameLoop() {
 
   bullets = bullets.filter(b => b.alive);
 
-  // 敌人重生（最多同时3个在场，最多总共击毁10个）
+  // 敌人重生
   let aliveEnemies = enemies.filter(e => e.alive).length;
   if (aliveEnemies < 3 && destroyedCount < totalEnemies) {
     if (Math.random() < 0.01) spawnEnemies();
@@ -399,11 +427,11 @@ function gameLoop() {
     if (lives <= 0) {
       gameState = 'gameover';
     } else {
-      player = new Tank(T + 2, T * 11 + 2, 0, '#4a8c2a', true);
+      player = new Tank(T + 2, T * 11 + 2, 0, '#2ecc40', true);
     }
   }
 
-  // Win check: 击毁 totalEnemies 个敌人即胜利
+  // Win check
   if (destroyedCount >= totalEnemies) {
     gameState = 'win';
   }
